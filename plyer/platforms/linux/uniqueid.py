@@ -2,10 +2,8 @@
 Module of Linux API for plyer.uniqueid.
 '''
 
-from os import environ
-from subprocess import Popen, PIPE
+from os.path import isfile
 from plyer.facades import UniqueID
-from plyer.utils import whereis_exe
 
 
 class LinuxUniqueID(UniqueID):
@@ -14,25 +12,8 @@ class LinuxUniqueID(UniqueID):
     '''
 
     def _get_uid(self):
-        old_lang = environ.get('LANG')
-        environ['LANG'] = 'C'
-        stdout = Popen(
-            ["lshw", "-quiet"],
-            stdout=PIPE, stderr=PIPE
-        ).communicate()[0].decode('utf-8')
-
-        output = u''
-        for line in stdout.splitlines():
-            if 'serial:' not in line:
-                continue
-            output = line
-            break
-
-        environ['LANG'] = old_lang or u''
-        result = None
-
-        if output:
-            result = output.split()[1]
+        with open("/etc/machine-id", "r") as machine_id_file:
+            result = machine_id_file.read().strip("\n")
         return result
 
 
@@ -41,7 +22,7 @@ def instance():
     Instance for facade proxy.
     '''
     import sys
-    if whereis_exe('lshw'):
+    if isfile("/etc/machine-id"):
         return LinuxUniqueID()
-    sys.stderr.write("lshw not found.")
+    sys.stderr.write("/etc/machine-id not found.")
     return UniqueID()
