@@ -4,7 +4,7 @@ Returns the following depending on the platform:
 
 * **Android**: Android ID
 * **OS X**: Serial number of the device
-* **Linux**: Serial number using lshw
+* **Linux**: Machine UUID from dbus-uuidgen
 * **Windows**: MachineGUID from regkey
 * **iOS**: UUID
 

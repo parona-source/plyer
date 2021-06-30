@@ -2,8 +2,7 @@
 Module of Linux API for plyer.uniqueid.
 '''
 
-from os import environ
-from subprocess import Popen, PIPE
+from subprocess import run
 from plyer.facades import UniqueID
 from plyer.utils import whereis_exe
 
@@ -14,26 +13,16 @@ class LinuxUniqueID(UniqueID):
     '''
 
     def _get_uid(self):
-        old_lang = environ.get('LANG')
-        environ['LANG'] = 'C'
-        stdout = Popen(
-            ["lshw", "-quiet"],
-            stdout=PIPE, stderr=PIPE
-        ).communicate()[0].decode('utf-8')
-
-        output = u''
-        for line in stdout.splitlines():
-            if 'serial:' not in line:
-                continue
-            output = line
-            break
-
-        environ['LANG'] = old_lang or u''
-        result = None
-
-        if output:
-            result = output.split()[1]
-        return result
+        completeprocess = run(
+                ["dbus-uuidgen", "--get"],
+                capture_output=True,
+                text=True
+                )
+        if completeprocess.returncode == 0:
+            return completeprocess.stdout.strip("\n")
+        else:
+            sys.stderr.write("`dbus-uuidgen --get` failed")
+            return None
 
 
 def instance():
@@ -41,7 +30,7 @@ def instance():
     Instance for facade proxy.
     '''
     import sys
-    if whereis_exe('lshw'):
+    if whereis_exe('dbus-uuidgen'):
         return LinuxUniqueID()
-    sys.stderr.write("lshw not found.")
+    sys.stderr.write("dbus-uuidgen not found.")
     return UniqueID()
